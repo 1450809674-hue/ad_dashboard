@@ -674,6 +674,85 @@ function renderTrend1() {
     });
   });
 
+  // 新增：面积趋势图（添加成本 + 添加率）
+  var areaMetrics = [
+    {key:'添加成本', name:'添加成本', calc:function(r){ return (r['添加数']||0)>0 ? (r['投放总成本']||0)/(r['添加数']||0) : 0; }},
+    {key:'添加率', name:'添加率', calc:function(r){ return (r['获客量']||0)>0 ? (r['添加数']||0)/(r['获客量']||0) : 0; }}
+  ];
+
+  areaMetrics.forEach(function(m, mi){
+    var box = document.createElement('div');
+    box.className = 'chart-box';
+    var idx = metrics.length + mi;
+    box.innerHTML = '<div class="chart-title">'+m.name+'</div><div class="chart-el" id="trend1-'+idx+'"></div>';
+    container.appendChild(box);
+
+    var chart = echarts.init(document.getElementById('trend1-'+idx), 'dark');
+    trend1Charts.push(chart);
+
+    var series = projects.map(function(proj, pi){
+      var projData = data.filter(function(r){ return r.项目===proj; });
+      var projMap = {};
+      projData.forEach(function(r){ projMap[String(r.营期)] = r; });
+
+      var seriesData = labels.map(function(yq){
+        var r = projMap[yq];
+        return r ? m.calc(r) : null;
+      });
+
+      var labelStep = labels.length <= 15 ? 1
+                    : labels.length <= 30 ? 2
+                    : labels.length <= 60 ? 4
+                    : 8;
+
+      return {
+        name: proj,
+        type: 'line',
+        smooth: true,
+        lineStyle: { color: COLORS[pi % COLORS.length], width: 2 },
+        itemStyle: { color: COLORS[pi % COLORS.length] },
+        areaStyle: { color: COLORS[pi % COLORS.length], opacity: 0.1 },
+        connectNulls: false,
+        data: seriesData,
+        label: {
+          show: true,
+          position: 'top',
+          fontSize: 10,
+          color: '#ccc',
+          formatter: function(params) {
+            if (params.dataIndex % labelStep !== 0) return '';
+            var v = params.value;
+            if (v === null || v === undefined || v === 0) return '';
+            return fmtField(v, m.key);
+          }
+        },
+        labelLayout: { hideOverlap: true }
+      };
+    });
+
+    chart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        formatter: function(params){
+          var yq = labels[params[0].dataIndex];
+          var html = '<b>' + yq + '期</b><br/>';
+          params.forEach(function(p){
+            if(p.value !== null && p.value !== undefined){
+              html += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+p.color+';margin-right:5px"></span>'+p.seriesName+': '+fmtField(p.value, m.key)+'<br/>';
+            }
+          });
+          return html;
+        }
+      },
+      legend: { data: projects, textStyle: {color:'#aaa'}, top: 0, type: 'scroll' },
+      xAxis: { type: 'category', data: labels, axisLabel: {rotate:45, color:'#aaa', fontSize:10, interval: labels.length > 15 ? 'auto' : 0} },
+      yAxis: { type: 'value', splitLine: {lineStyle:{color:'#1e1e32'}}, axisLabel: {color:'#aaa'} },
+      series: series,
+      grid: {left:'10%', right:'8%', bottom: labels.length > 10 ? '28%' : '20%', top: projects.length > 2 ? '18%' : '12%'},
+    });
+  });
+
   // 明细表
   var fields = [
     {k:'项目',l:'项目'},{k:'营期',l:'营期'},{k:'业务月',l:'业务月'},
