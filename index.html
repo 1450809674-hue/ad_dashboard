@@ -970,8 +970,10 @@ function renderChannelAnalysis() {
   var GRID_BOTTOM = '18%';
 
   // 共用函数：绘制项目分组外框 + 项目名
-  function addProjFrames(chart) {
-    if (projRanges.length <= 1) return;
+  function addProjFrames(chart, xList, ranges) {
+    xList = xList || xYqList;
+    ranges = ranges || projRanges;
+    if (ranges.length <= 1) return;
     var frameAdded = false;
     chart.on('finished', function(){
       if (frameAdded) return;
@@ -988,7 +990,7 @@ function renderChannelAnalysis() {
       var chartTop = t, chartBottom = H - b;
 
       // 计算每个 category 刻度的像素宽度
-      var xLen = xYqList.length;
+      var xLen = xList.length;
       var halfBand = 0;
       if (xLen > 1) {
         var px0 = chart.convertToPixel({ xAxisIndex: 0 }, 0);
@@ -997,7 +999,7 @@ function renderChannelAnalysis() {
       }
 
       var glist = [];
-      projRanges.forEach(function(rng){
+      ranges.forEach(function(rng){
         var x0 = chart.convertToPixel({ xAxisIndex: 0 }, rng.start);
         var x1 = chart.convertToPixel({ xAxisIndex: 0 }, rng.end);
         // 外框矩形（扩展半个 band 宽度，消除项目间间隔）
@@ -1026,7 +1028,7 @@ function renderChannelAnalysis() {
   (function(){
     var box = document.createElement('div');
     box.className = 'chart-box';
-    box.innerHTML = '<div class="chart-title">获客占比（四大渠道叠加）</div><div class="chart-el" id="channel-chart-0"></div>';
+    box.innerHTML = '<div class="chart-title">获客占比（四大渠道叠加）</div><div class="chart-el" id="channel-chart-0" style="height:360px"></div>';
     container.appendChild(box);
     var chart = echarts.init(document.getElementById('channel-chart-0'), 'dark');
     channelCharts.push(chart);
@@ -1096,7 +1098,7 @@ function renderChannelAnalysis() {
   trendMetrics.forEach(function(m, mi){
     var box = document.createElement('div');
     box.className = 'chart-box';
-    box.innerHTML = '<div class="chart-title">'+m.name+'</div><div class="chart-el" id="channel-chart-'+(mi+1)+'"></div>';
+    box.innerHTML = '<div class="chart-title">'+m.name+'</div><div class="chart-el" id="channel-chart-'+(mi+1)+'" style="height:360px"></div>';
     container.appendChild(box);
     var chart = echarts.init(document.getElementById('channel-chart-'+(mi+1)), 'dark');
     channelCharts.push(chart);
@@ -1156,6 +1158,221 @@ function renderChannelAnalysis() {
     });
     addProjFrames(chart);
   });
+
+  // ============ 业务周维度汇总（渠道类型分析） ============
+  (function(){
+    // 按 项目+业务周+渠道分类 聚合
+    var weekAggMap = {};
+    allDetail.forEach(function(r){
+      var cat = getCat(r);
+      if (!cat) return;
+      var key = r.项目 + '|' + r.业务周 + '|' + cat;
+      if (!weekAggMap[key]) {
+        weekAggMap[key] = { 项目: r.项目, 业务周: r.业务周, 渠道分类: cat,
+          获客量: 0, 投放总成本: 0, 添加数: 0, L1总产值: 0, L1总单量: 0 };
+      }
+      var agg = weekAggMap[key];
+      agg.获客量 += (r.获客量 || 0);
+      agg.投放总成本 += (r.投放总成本 || 0);
+      agg.添加数 += (r.添加数 || 0);
+      agg.L1总产值 += (r.L1总产值 || 0);
+      agg.L1总单量 += (r.L1总单量 || 0);
+    });
+
+    // 业务周汇总获客量（分母）
+    var weekTotalMap = {};
+    allDetail.filter(function(r){ return r.渠道分类 === '汇总'; }).forEach(function(r){
+      var key = r.项目 + '|' + r.业务周;
+      if (!weekTotalMap[key]) weekTotalMap[key] = 0;
+      weekTotalMap[key] += (r.获客量 || 0);
+    });
+
+    // 计算指标
+    var weekAggRows = Object.values(weekAggMap).map(function(agg){
+      var totalHK = weekTotalMap[agg.项目 + '|' + agg.业务周] || 0;
+      return {
+        项目: agg.项目, 业务周: agg.业务周, 渠道分类: agg.渠道分类,
+        获客量: agg.获客量,
+        获客占比: totalHK > 0 ? agg.获客量 / totalHK : 0,
+        获客成本: agg.获客量 > 0 ? agg.投放总成本 / agg.获客量 : 0,
+        添加转率: agg.添加数 > 0 ? agg.L1总单量 / agg.添加数 : 0,
+        roi: agg.投放总成本 > 0 ? agg.L1总产值 / agg.投放总成本 : 0,
+      };
+    });
+
+    // 业务周排序
+    var weekOrder = {};
+    (D.meta.business_weeks || []).forEach(function(w, i){ weekOrder[w] = i; });
+
+    weekAggRows.sort(function(a,b){
+      if (a.项目 !== b.项目) return a.项目.localeCompare(b.项目);
+      return (weekOrder[a.业务周] || 999) - (weekOrder[b.业务周] || 999);
+    });
+
+    // 收集项目
+    var wProjects = [];
+    var wProjectSet = {};
+    weekAggRows.forEach(function(r){ if(!wProjectSet[r.项目]){ wProjectSet[r.项目]=true; wProjects.push(r.项目); } });
+    wProjects.sort();
+
+    // 构建 X 轴
+    var xWeekList = [];
+    var xWeekSet = {};
+    weekAggRows.forEach(function(r){
+      var key = r.项目 + '|' + r.业务周;
+      if (!xWeekSet[key]) {
+        xWeekSet[key] = true;
+        xWeekList.push({ week: r.业务周, proj: r.项目 });
+      }
+    });
+    xWeekList.sort(function(a,b){
+      if (a.proj !== b.proj) return a.proj.localeCompare(b.proj);
+      return (weekOrder[a.week] || 999) - (weekOrder[b.week] || 999);
+    });
+    var wLabels = xWeekList.map(function(x){ return x.week; });
+
+    // 项目范围
+    var wProjRanges = [];
+    (function(){
+      var startIdx = 0;
+      for (var i = 1; i <= xWeekList.length; i++) {
+        var proj = i < xWeekList.length ? xWeekList[i].proj : null;
+        if (proj !== xWeekList[startIdx].proj) {
+          wProjRanges.push({ proj: xWeekList[startIdx].proj, start: startIdx, end: i - 1 });
+          startIdx = i;
+        }
+      }
+    })();
+
+    // lookup map
+    var wLookupMap = {};
+    weekAggRows.forEach(function(r){ wLookupMap[r.项目 + '|' + r.业务周 + '|' + r.渠道分类] = r; });
+
+    var wLabelStep = wLabels.length <= 15 ? 1 : wLabels.length <= 30 ? 2 : wLabels.length <= 60 ? 4 : 8;
+    var wGRID_TOP = wProjRanges.length > 1 ? '28%' : '18%';
+
+    // 分隔线
+    container.appendChild(document.createElement('hr'));
+    container.appendChild(document.createElement('hr'));
+
+    // 图1：占比叠加柱状图（业务周）
+    (function(){
+      var box = document.createElement('div');
+      box.className = 'chart-box';
+      box.innerHTML = '<div class="chart-title">获客占比（四大渠道叠加，业务周维度）</div><div class="chart-el" id="channel-chart-week-0" style="height:360px"></div>';
+      container.appendChild(box);
+      var chart = echarts.init(document.getElementById('channel-chart-week-0'), 'dark');
+      channelCharts.push(chart);
+
+      var flatSeries = [];
+      CHANNEL_CATS.forEach(function(cat){
+        var data = xWeekList.map(function(x){
+          var r = wLookupMap[x.proj + '|' + x.week + '|' + cat];
+          return r ? Math.round(r.获客占比 * 100) : null;
+        });
+        var hasData = data.some(function(v){ return v !== null && v > 0; });
+        if (!hasData) return;
+        flatSeries.push({
+          name: cat, type: 'bar', stack: 'total', barMaxWidth: 24,
+          itemStyle: { color: CAT_COLORS[cat] }, data: data,
+          label: { show: true, position: 'inside', fontSize: 9, color: '#fff',
+            formatter: function(params){ if (!params.value || params.value < 3) return ''; return params.value + '%'; }
+          }
+        });
+      });
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' },
+          formatter: function(params){
+            var week = params[0].axisValue;
+            var proj = '';
+            for (var i = 0; i < xWeekList.length; i++) {
+              if (xWeekList[i].week === week) { proj = xWeekList[i].proj; break; }
+            }
+            var html = '<b>' + proj + ' - ' + week + '</b><br/>';
+            params.forEach(function(p){
+              if(p.value !== null && p.value !== undefined && p.value > 0)
+                html += '<span style="display:inline-block;width:10px;height:10px;background:'+p.color+';margin-right:4px"></span>'+p.seriesName+': '+p.value+'%<br/>';
+            });
+            return html;
+          }
+        },
+        legend: { type: 'scroll', textStyle: { color: '#aaa', fontSize: 10 }, top: 0, data: CHANNEL_CATS },
+        xAxis: { type: 'category', data: wLabels, axisLabel: { rotate: 45, color: '#aaa', fontSize: 10, interval: wLabels.length > 15 ? 'auto' : 0 } },
+        yAxis: { type: 'value', axisLabel: { color: '#aaa', formatter: '{value}%' }, splitLine: { lineStyle: { color: '#1e1e32' } } },
+        series: flatSeries,
+        grid: { left: '10%', right: '8%', bottom: GRID_BOTTOM, top: wGRID_TOP },
+        graphic: []
+      });
+      addProjFrames(chart, xWeekList, wProjRanges);
+    })();
+
+    // 图2~4：趋势图（业务周）
+    var wTrendMetrics = [
+      { key: '获客成本', name: '获客成本（四大渠道，业务周维度）' },
+      { key: '添加转率', name: '添加转率（四大渠道，业务周维度）' },
+      { key: 'roi', name: 'ROI（四大渠道，业务周维度）' },
+    ];
+
+    wTrendMetrics.forEach(function(m, mi){
+      var box = document.createElement('div');
+      box.className = 'chart-box';
+      box.innerHTML = '<div class="chart-title">'+m.name+'</div><div class="chart-el" id="channel-chart-week-'+(mi+1)+'" style="height:360px"></div>';
+      container.appendChild(box);
+      var chart = echarts.init(document.getElementById('channel-chart-week-'+(mi+1)), 'dark');
+      channelCharts.push(chart);
+
+      var series = [];
+      CHANNEL_CATS.forEach(function(cat){
+        var data = xWeekList.map(function(x){
+          var r = wLookupMap[x.proj + '|' + x.week + '|' + cat];
+          return r ? (r[m.key] || null) : null;
+        });
+        var hasData = data.some(function(v){ return v !== null && v !== 0; });
+        if (!hasData) return;
+        series.push({
+          name: cat, type: 'line', smooth: true,
+          lineStyle: { color: CAT_COLORS[cat], width: 2 },
+          itemStyle: { color: CAT_COLORS[cat] }, data: data,
+          label: { show: true, position: 'top', fontSize: 9, color: '#ccc',
+            formatter: function(params){
+              if (params.dataIndex % wLabelStep !== 0) return '';
+              if (params.value === null || params.value === 0) return '';
+              return fmtField(params.value, m.key);
+            }
+          },
+          labelLayout: { hideOverlap: true }
+        });
+      });
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis',
+          formatter: function(params){
+            var week = params[0].axisValue;
+            var proj = '';
+            for (var i = 0; i < xWeekList.length; i++) {
+              if (xWeekList[i].week === week) { proj = xWeekList[i].proj; break; }
+            }
+            var html = '<b>' + proj + ' - ' + week + '</b><br/>';
+            params.forEach(function(p){
+              if(p.value !== null && p.value !== undefined)
+                html += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+p.color+';margin-right:4px"></span>'+p.seriesName+': '+fmtField(p.value, m.key)+'<br/>';
+            });
+            return html;
+          }
+        },
+        legend: { type: 'scroll', textStyle: { color: '#aaa', fontSize: 10 }, top: 0, data: CHANNEL_CATS },
+        xAxis: { type: 'category', data: wLabels, axisLabel: { rotate: 45, color: '#aaa', fontSize: 10, interval: wLabels.length > 15 ? 'auto' : 0 } },
+        yAxis: { type: 'value', splitLine: { lineStyle: { color: '#1e1e32' } }, axisLabel: { color: '#aaa' } },
+        series: series,
+        grid: { left: '10%', right: '8%', bottom: GRID_BOTTOM, top: wGRID_TOP },
+        graphic: []
+      });
+      addProjFrames(chart, xWeekList, wProjRanges);
+    });
+  })();
 }
 
 /* ===== JS端投放平台标准化映射 ===== */
