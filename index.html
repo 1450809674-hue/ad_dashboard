@@ -28,7 +28,6 @@ h2 { font-size: 16px; color: #a0a0ff; margin: 20px 24px 12px; border-left: 3px s
   width: 100%; text-align: left; position: relative;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.filter-btn::after { content: "\u25BE"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
 .filter-dropdown {
   display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
   background: #1a1a2e; border: 1px solid #333; border-radius: 8px;
@@ -1541,13 +1540,13 @@ function init() {
   hmUpdateChannelTypeOptions();
   hmUpdateSubChannelOptions();
 
-  renderAll();
   document.getElementById('loading').style.display = 'none';
   document.getElementById('section-overview').style.display = 'block';
   document.getElementById('section-trend1').style.display = 'block';
   document.getElementById('section-trend2').style.display = 'block';
   document.getElementById('section-channel').style.display = 'block';
   document.getElementById('section-trend3').style.display = 'block';
+  renderAll();
 }
 
 window.addEventListener('resize', function(){
