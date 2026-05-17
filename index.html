@@ -1025,12 +1025,15 @@ function renderChannelAnalysis() {
   }
 
   // ============ 业务周维度汇总（渠道类型分析） ============
-  // 先添加周标题
+  // 先添加周标题（wrapper强制独占一行）
   (function(){
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'width:100%;flex-basis:100%;display:block;';
     var h = document.createElement('h3');
     h.textContent = '📊 渠道类型分析（非标 / 信息流 / 直播 / 电商）-- 周';
-    h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;width:100%;flex-basis:100%;';
-    container.appendChild(h);
+    h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;';
+    wrap.appendChild(h);
+    container.appendChild(wrap);
   })();
   (function(){
     // 按 项目+业务周+渠道分类 聚合
@@ -1243,12 +1246,15 @@ function renderChannelAnalysis() {
   })();
 
   // ============ 营期维度汇总（渠道类型分析） ============
-  // 先添加营期标题
+  // 先添加营期标题（wrapper强制独占一行）
   (function(){
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'width:100%;flex-basis:100%;display:block;';
     var h = document.createElement('h3');
     h.textContent = '📊 渠道类型分析（非标 / 信息流 / 直播 / 电商）-- 营期';
-    h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;width:100%;flex-basis:100%;';
-    container.appendChild(h);
+    h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;';
+    wrap.appendChild(h);
+    container.appendChild(wrap);
   })();
 
   // ============ 图1：占比叠加柱状图（营期维度） ============
