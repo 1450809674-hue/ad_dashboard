@@ -1179,9 +1179,11 @@ function renderChannelAnalysis() {
       addProjFrames(chart, xWeekList, wProjRanges);
     })();
 
-    // 图2~4：趋势图（业务周）
+    // 图2~6：趋势图（业务周）
     var wTrendMetrics = [
       { key: '获客成本', name: '获客成本（四大渠道，业务周维度）' },
+      { key: '添加率',   name: '添加率（四大渠道，业务周维度）',   calc: function(r){ return (r.获客量||0)>0 ? (r.添加数||0)/(r.获客量||0) : 0; } },
+      { key: '添加成本', name: '添加成本（四大渠道，业务周维度）', calc: function(r){ return (r.添加数||0)>0 ? (r.投放总成本||0)/(r.添加数||0) : 0; } },
       { key: '添加转率', name: '添加转率（四大渠道，业务周维度）' },
       { key: 'roi', name: 'ROI（四大渠道，业务周维度）' },
     ];
@@ -1198,7 +1200,7 @@ function renderChannelAnalysis() {
       CHANNEL_CATS.forEach(function(cat){
         var data = xWeekList.map(function(x){
           var r = wLookupMap[x.proj + '|' + x.week + '|' + cat];
-          return r ? (r[m.key] || null) : null;
+          return r ? (m.calc ? m.calc(r) : (r[m.key] || null)) : null;
         });
         var hasData = data.some(function(v){ return v !== null && v !== 0; });
         if (!hasData) return;
@@ -1525,6 +1527,8 @@ function renderTrend3() {
     { key: '获客占比', name: '获客占比', isPercent: true },
     { key: '添加转率', name: '添加转率', isPercent: true },
     { key: 'roi', name: 'ROI', isPercent: false },
+    { key: '添加率', name: '添加率', isPercent: true },
+    { key: '添加成本', name: '添加成本', isPercent: false },
   ];
 
   var container = document.getElementById('heatmap-scroll-inner');
@@ -1549,6 +1553,8 @@ function renderTrend3() {
       else if (m.key === '获客占比') val = (yqTotalHK[a.xKey] || 0) > 0 ? a.获客量 / yqTotalHK[a.xKey] : 0;
       else if (m.key === '添加转率') val = a.添加数 > 0 ? a.L1总单量 / a.添加数 : 0;
       else if (m.key === 'roi') val = a.投放总成本 > 0 ? a.L1总产值 / a.投放总成本 : 0;
+      else if (m.key === '添加率') val = a.获客量 > 0 ? a.添加数 / a.获客量 : 0;
+      else if (m.key === '添加成本') val = a.添加数 > 0 ? a.投放总成本 / a.添加数 : 0;
       heatData.push([xIdx, yIdx, val]);
     });
     allHeat[m.key] = heatData;
@@ -1563,7 +1569,9 @@ function renderTrend3() {
     'roi': 1.5,
     '添加转率': 0.05,    // 5%
     '获客成本': 200,
-    '获客占比': 0.25      // 25%
+    '获客占比': 0.25,    // 25%
+    '添加率': 1.0,       // 100%
+    '添加成本': 200,
   };
 
   // 项目分隔索引（用于X轴splitLine）
@@ -1595,7 +1603,9 @@ function renderTrend3() {
       if (v === 0) return '';
       if (m.key === 'roi') return v.toFixed(2);
       if (m.key === '添加转率') return (v * 100).toFixed(2) + '%';
+      if (m.key === '添加率') return Math.round(v * 100) + '%';
       if (m.key === '获客成本') return Math.round(v).toLocaleString('zh-CN');
+      if (m.key === '添加成本') return Math.round(v).toLocaleString('zh-CN');
       if (m.key === '获客占比') return Math.round(v * 100) + '%';
       return String(v);
     }
