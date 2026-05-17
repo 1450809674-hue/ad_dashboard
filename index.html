@@ -1233,7 +1233,7 @@ function renderChannelAnalysis() {
         },
         legend: { type: 'scroll', textStyle: { color: '#aaa', fontSize: 10 }, top: 0, data: CHANNEL_CATS },
         xAxis: { type: 'category', data: wLabels, axisLabel: { rotate: 45, color: '#aaa', fontSize: 10, interval: wLabels.length > 15 ? 'auto' : 0 } },
-        yAxis: (function(){ var y = { type: 'value', splitLine: { lineStyle: { color: '#1e1e32' } }, axisLabel: { color: '#aaa' } }; if (m.key === 'roi') y.max = 2.0; return y; })(),
+        yAxis: (function(){ var y = { type: 'value', splitLine: { lineStyle: { color: '#1e1e32' } }, axisLabel: { color: '#aaa' } }; if (m.key === 'roi') y.max = 5.0; return y; })(),
         series: series,
         grid: { left: '10%', right: '8%', bottom: GRID_BOTTOM, top: wGRID_TOP },
         graphic: []
@@ -1378,7 +1378,7 @@ function renderChannelAnalysis() {
         data: CHANNEL_CATS
       },
       xAxis: { type: 'category', data: labels, axisLabel: { rotate: 45, color: '#aaa', fontSize: 10, interval: labels.length > 15 ? 'auto' : 0 } },
-      yAxis: (function(){ var y = { type: 'value', splitLine: { lineStyle: { color: '#1e1e32' } }, axisLabel: { color: '#aaa' } }; if (m.key === 'roi') y.max = 2.0; return y; })(),
+      yAxis: (function(){ var y = { type: 'value', splitLine: { lineStyle: { color: '#1e1e32' } }, axisLabel: { color: '#aaa' } }; if (m.key === 'roi') y.max = 5.0; return y; })(),
       series: series,
       grid: { left: '10%', right: '8%', bottom: GRID_BOTTOM, top: GRID_TOP },
       graphic: []
