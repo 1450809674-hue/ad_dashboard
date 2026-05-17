@@ -902,6 +902,8 @@ function renderChannelAnalysis() {
     return {
       项目: agg.项目, 营期: agg.营期, 渠道分类: agg.渠道分类,
       获客量: agg.获客量,
+      添加数: agg.添加数,
+      投放总成本: agg.投放总成本,
       获客占比: totalHK > 0 ? agg.获客量 / totalHK : 0,
       获客成本: agg.获客量 > 0 ? agg.投放总成本 / agg.获客量 : 0,
       添加转率: agg.添加数 > 0 ? agg.L1总单量 / agg.添加数 : 0,
@@ -1068,6 +1070,8 @@ function renderChannelAnalysis() {
       return {
         项目: agg.项目, 业务周: agg.业务周, 渠道分类: agg.渠道分类,
         获客量: agg.获客量,
+        添加数: agg.添加数,
+        投放总成本: agg.投放总成本,
         获客占比: totalHK > 0 ? agg.获客量 / totalHK : 0,
         获客成本: agg.获客量 > 0 ? agg.投放总成本 / agg.获客量 : 0,
         添加转率: agg.添加数 > 0 ? agg.L1总单量 / agg.添加数 : 0,
