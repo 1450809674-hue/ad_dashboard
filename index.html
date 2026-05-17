@@ -595,12 +595,12 @@ function renderTrend1() {
 
   // 6个趋势图：ROILED BY ROW
   var allMetrics = [
-    {key:'roi',       name:'ROI',      calc:null},
-    {key:'添加转率',   name:'添加转率',  calc:null},
-    {key:'获客成本',   name:'获客成本',  calc:null},
-    {key:'添加率',    name:'添加率',   calc:function(r){ return (r['获客量']||0)>0 ? (r['添加数']||0)/(r['获客量']||0) : 0; }},
-    {key:'添加成本',   name:'添加成本',  calc:function(r){ return (r['添加数']||0)>0 ? (r['投放总成本']||0)/(r['添加数']||0) : 0; }},
-    {key:'添加产值',   name:'添加产值',  calc:null},
+    {key:'roi',       name:'ROI',      isArea:false, calc:null},
+    {key:'添加转率',   name:'添加转率',  isArea:false, calc:null},
+    {key:'获客成本',   name:'获客成本',  isArea:true,  calc:null},
+    {key:'添加率',    name:'添加率',   isArea:false, calc:function(r){ return (r['获客量']||0)>0 ? (r['添加数']||0)/(r['获客量']||0) : 0; }},
+    {key:'添加成本',   name:'添加成本',  isArea:true,  calc:function(r){ return (r['添加数']||0)>0 ? (r['投放总成本']||0)/(r['添加数']||0) : 0; }},
+    {key:'添加产值',   name:'添加产值',  isArea:true,  calc:null},
   ];
 
   allMetrics.forEach(function(m, mi){
@@ -653,6 +653,9 @@ function renderTrend1() {
         },
         labelLayout: { hideOverlap: true }
       };
+      if (m.isArea) {
+        seriesItem.areaStyle = { color: COLORS[pi % COLORS.length], opacity: 0.1 };
+      }
       return seriesItem;
     });
 
