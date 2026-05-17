@@ -1028,7 +1028,7 @@ function renderChannelAnalysis() {
   // 先添加周标题（wrapper强制独占一行）
   (function(){
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;flex-basis:100%;display:block;';
+    wrap.style.cssText = 'grid-column:1 / -1;width:100%;display:block;';
     var h = document.createElement('h3');
     h.textContent = '📊 渠道类型分析（非标 / 信息流 / 直播 / 电商）-- 周';
     h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;';
@@ -1249,7 +1249,7 @@ function renderChannelAnalysis() {
   // 先添加营期标题（wrapper强制独占一行）
   (function(){
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'width:100%;flex-basis:100%;display:block;';
+    wrap.style.cssText = 'grid-column:1 / -1;width:100%;display:block;';
     var h = document.createElement('h3');
     h.textContent = '📊 渠道类型分析（非标 / 信息流 / 直播 / 电商）-- 营期';
     h.style.cssText = 'color:#ddd;margin:18px 0 10px;font-size:15px;';
