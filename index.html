@@ -1079,9 +1079,20 @@ function renderChannelAnalysis() {
       };
     });
 
-    // 业务周排序
+    // 业务周排序（按真实日期升序，不依赖 meta 数组顺序）
+    function parseWeekStart(w) {
+      // 格式示例: "5/4-10", "1/26-2/1", "12/29-1/4"
+      var parts = w.split('-')[0].split('/');
+      var m = parseInt(parts[0], 10);
+      var d = parseInt(parts[1], 10);
+      // 用当前年做基准，12月视为上一年（跨年周）
+      var y = (m === 12) ? 2025 : 2026;
+      return new Date(y, m - 1, d).getTime();
+    }
+    var allWeeks = D.meta.business_weeks || [];
+    var sortedWeeks = allWeeks.slice().sort(function(a, b){ return parseWeekStart(a) - parseWeekStart(b); });
     var weekOrder = {};
-    (D.meta.business_weeks || []).forEach(function(w, i){ weekOrder[w] = i; });
+    sortedWeeks.forEach(function(w, i){ weekOrder[w] = i; });
 
     weekAggRows.sort(function(a,b){
       if (a.项目 !== b.项目) return a.项目.localeCompare(b.项目);
