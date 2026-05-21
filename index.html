@@ -1882,26 +1882,30 @@ window.addEventListener('resize', function(){
     // 踢人：删除对应行
   ];
   function gateCheck() {
-    var auth = localStorage.getItem("ad_db_auth");
-    if (auth) {
-      var parts = auth.split(":");
-      var valid = ACCESS_LIST.some(function(e){ return e.name === parts[0] && e.code === parts[1]; });
-      if (valid) { init(); return; }
-      localStorage.removeItem("ad_db_auth");
-    }
     var overlay = document.getElementById("gate-overlay");
-    overlay.style.display = "flex";
     var btn = document.getElementById("gate-btn");
     var err = document.getElementById("gate-error");
     var nameInp = document.getElementById("gate-name");
     var codeInp = document.getElementById("gate-code");
+
+    // 尝试读取 localStorage（可能因隐私设置被禁用）
+    var auth = null;
+    try { auth = localStorage.getItem("ad_db_auth"); } catch(e) {}
+    if (auth) {
+      var parts = auth.split(":");
+      var valid = ACCESS_LIST.some(function(e){ return e.name === parts[0] && e.code === parts[1]; });
+      if (valid) { overlay.style.display = "none"; init(); return; }
+    }
+
+    overlay.style.display = "flex";
+    nameInp.focus();
     btn.onclick = function() {
       var name = nameInp.value.trim();
       var code = codeInp.value.trim();
       if (!name || !code) { err.textContent = "请填写名字和访问码"; return; }
       var match = ACCESS_LIST.some(function(e){ return e.name === name && e.code === code; });
       if (match) {
-        localStorage.setItem("ad_db_auth", name + ":" + code);
+        try { localStorage.setItem("ad_db_auth", name + ":" + code); } catch(e) {}
         overlay.style.display = "none";
         init();
       } else {
