@@ -154,7 +154,7 @@ h2 { font-size: 16px; color: #a0a0ff; margin: 20px 24px 12px; border-left: 3px s
 </div>
 
 
-<h1>📊 投放数据看板</h1>
+<h1 style="position:relative">📊 投放数据看板<span id="logout-btn" style="position:absolute;right:24px;font-size:12px;color:#888;cursor:pointer;font-weight:normal;letter-spacing:0" title="清除登录状态，下次打开需重新验证">退出</span></h1>
 
 <!-- 筛选器 -->
 <div id="filters">
@@ -1916,6 +1916,15 @@ window.addEventListener('resize', function(){
     nameInp.addEventListener("keydown", function(e) { if (e.key === "Enter") codeInp.focus(); });
   }
   gateCheck();
+
+  // 退出登录：清除 localStorage 并刷新
+  var logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function() {
+      try { localStorage.removeItem("ad_db_auth"); } catch(e) {}
+      location.reload();
+    });
+  }
 
 })();
 </script>
