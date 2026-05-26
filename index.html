@@ -1655,9 +1655,17 @@ function renderTrend3() {
     trend3Charts.push(chart);
 
     var heatData = allHeat[m.key];
-    // 固定热力区间
+    // 热力区间：获客成本和获客占比使用实际数据范围动态拉伸颜色，其他指标用固定max
     var vMin = 0;
     var vMax = FIXED_MAX[m.key] || 1;
+    if (m.key === '获客成本' || m.key === '获客占比') {
+      var mapVals = heatData.map(function(d){ return d[2]; }).filter(function(v){ return v !== null && v !== undefined && !isNaN(v); });
+      if (mapVals.length > 0) {
+        vMin = Math.min.apply(null, mapVals);
+        vMax = Math.max.apply(null, mapVals);
+        if (vMax === vMin) { vMax = vMin + (m.key === '获客占比' ? 0.01 : 1); }
+      }
+    }
 
     // 数据标签格式化：ROI和转化率保留两位小数，成本和占比保留整数
     function labelFmt(v) {
